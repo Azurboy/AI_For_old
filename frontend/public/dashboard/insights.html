@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>语客颂 - 智能仪表盘</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 28px;
+            color: #2d3748;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: #718096;
+            font-size: 14px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .stat-card .label {
+            font-size: 13px;
+            color: #718096;
+            margin-bottom: 8px;
+        }
+
+        .stat-card .value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #2d3748;
+        }
+
+        .stat-card .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+
+        .badge.low { background: #c6f6d5; color: #2f855a; }
+        .badge.medium { background: #feebc8; color: #c05621; }
+        .badge.high { background: #fed7d7; color: #c53030; }
+        .badge.positive { background: #bee3f8; color: #2c5282; }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .card h2 {
+            font-size: 20px;
+            color: #2d3748;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+        }
+
+        .card h2::before {
+            content: '';
+            width: 4px;
+            height: 20px;
+            background: #667eea;
+            margin-right: 12px;
+            border-radius: 2px;
+        }
+
+        .summary-box {
+            background: #f7fafc;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+            border-left: 4px solid #667eea;
+        }
+
+        .emotion-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .emotion-item {
+            background: #f7fafc;
+            border-radius: 8px;
+            padding: 12px;
+        }
+
+        .emotion-item .label {
+            font-size: 12px;
+            color: #718096;
+            margin-bottom: 4px;
+        }
+
+        .emotion-item .value {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .needs-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .need-tag {
+            padding: 6px 12px;
+            background: #e6fffa;
+            color: #234e52;
+            border-radius: 16px;
+            font-size: 13px;
+        }
+
+        .score-bar {
+            background: #e2e8f0;
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 8px 0;
+        }
+
+        .score-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.3s ease;
+        }
+
+        .score-item {
+            margin-bottom: 16px;
+        }
+
+        .score-item .label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            color: #4a5568;
+            margin-bottom: 4px;
+        }
+
+        .insights-list {
+            list-style: none;
+        }
+
+        .insights-list li {
+            padding: 12px;
+            background: #f7fafc;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            padding-left: 32px;
+            position: relative;
+        }
+
+        .insights-list li::before {
+            content: '💡';
+            position: absolute;
+            left: 12px;
+        }
+
+        .info-grid {
+            display: grid;
+            gap: 12px;
+        }
+
+        .info-item {
+            background: #f7fafc;
+            border-radius: 8px;
+            padding: 12px;
+        }
+
+        .info-item .label {
+            font-size: 12px;
+            color: #718096;
+            margin-bottom: 4px;
+        }
+
+        .info-item .value {
+            font-size: 14px;
+            color: #2d3748;
+        }
+
+        .refresh-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .refresh-btn:hover {
+            background: #5a67d8;
+            transform: translateY(-1px);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #718096;
+        }
+
+        @media (max-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .recent-conversations {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .conversation-item {
+            background: #f7fafc;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 8px;
+        }
+
+        .conversation-item .user {
+            color: #2d3748;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .conversation-item .ai {
+            color: #718096;
+            font-size: 14px;
+        }
+
+        .conversation-item .time {
+            color: #a0aec0;
+            font-size: 12px;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 语客颂智能仪表盘</h1>
+            <p>老年人认知健康与情感陪伴分析系统 - 双层多智能体架构</p>
+            <div style="margin-top: 16px; display: flex; gap: 12px;">
+                <button class="refresh-btn" onclick="loadDashboard()" id="analyzeBtn">
+                    🔬 进行深度分析
+                </button>
+                <button class="refresh-btn" onclick="window.location.href='http://localhost:3000'" style="background: #4299e1;">
+                    📱 返回对话
+                </button>
+            </div>
+        </div>
+
+        <div id="loading" class="loading">
+            <p>⏳ 正在调用分析智能体（Analyst Agent）进行临床语言学分析...</p>
+            <p style="font-size: 14px; color: #a0aec0; margin-top: 8px;">这可能需要20-60秒，请耐心等待</p>
+        </div>
+
+        <div id="dashboard" style="display: none;">
+            <!-- 统计卡片 -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="label">对话总数</div>
+                    <div class="value" id="totalConversations">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">整体情绪</div>
+                    <div class="value" id="overallMood">-</div>
+                    <div class="badge positive" id="moodBadge">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">认知风险</div>
+                    <div class="value" id="riskLevel">-</div>
+                    <div class="badge low" id="riskBadge">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">压力水平</div>
+                    <div class="value" id="stressLevel">-</div>
+                    <div class="badge low" id="stressBadge">-</div>
+                </div>
+            </div>
+
+            <div class="main-grid">
+                <!-- 左列 -->
+                <div>
+                    <!-- 对话总结 -->
+                    <div class="card">
+                        <h2>📝 对话总结</h2>
+                        <div class="summary-box" id="summary">
+                            <p>加载中...</p>
+                        </div>
+                    </div>
+
+                    <!-- 临床语言生物标记物 -->
+                    <div class="card">
+                        <h2>🔬 临床语言生物标记物分析</h2>
+                        <p style="font-size: 13px; color: #718096; margin-bottom: 16px;">
+                            基于阿尔茨海默症早期检测研究，评分范围：1（无迹象）-  7（非常强烈）
+                        </p>
+                        <div id="clinicalBiomarkers"></div>
+                    </div>
+
+                    <!-- 整体评估 -->
+                    <div class="card">
+                        <h2>📋 整体评估报告</h2>
+                        <div style="padding: 12px; background: #f7fafc; border-radius: 8px; margin-bottom: 12px;">
+                            <strong>认知风险等级：</strong> <span id="cognitiveRiskLevel">-</span>
+                        </div>
+                        <div id="assessmentSummary" style="line-height: 1.6; color: #4a5568;"></div>
+                        <div style="margin-top: 16px;">
+                            <strong style="color: #2d3748;">建议：</strong>
+                            <ul id="recommendations" style="margin-top: 8px; padding-left: 20px; color: #4a5568;"></ul>
+                        </div>
+                    </div>
+
+                    <!-- 最近对话 -->
+                    <div class="card">
+                        <h2>💬 最近对话</h2>
+                        <div class="recent-conversations" id="recentConversations"></div>
+                    </div>
+                </div>
+
+                <!-- 右列 -->
+                <div>
+                    <!-- 情感分析 -->
+                    <div class="card">
+                        <h2>❤️ 情感分析</h2>
+                        <div class="emotion-grid">
+                            <div class="emotion-item">
+                                <div class="label">整体情绪</div>
+                                <div class="value" id="emotionMood">-</div>
+                            </div>
+                            <div class="emotion-item">
+                                <div class="label">压力水平</div>
+                                <div class="value" id="emotionStress">-</div>
+                            </div>
+                        </div>
+                        <div style="margin-top: 16px;">
+                            <div class="label" style="font-size: 13px; color: #718096; margin-bottom: 8px;">情感需求</div>
+                            <div class="needs-list" id="emotionalNeeds"></div>
+                        </div>
+                        <div style="margin-top: 16px;" id="concernsSection">
+                            <div class="label" style="font-size: 13px; color: #718096; margin-bottom: 8px;">担忧点</div>
+                            <div id="concerns"></div>
+                        </div>
+                    </div>
+
+                    <!-- 关键洞察 -->
+                    <div class="card">
+                        <h2>💡 关键洞察</h2>
+                        <ul class="insights-list" id="keyInsights"></ul>
+                    </div>
+
+                    <!-- 个人信息 -->
+                    <div class="card">
+                        <h2>👤 个人信息</h2>
+                        <div class="info-grid" id="personalInfo"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function loadDashboard() {
+            try {
+                const btn = document.getElementById('analyzeBtn');
+                btn.disabled = true;
+                btn.textContent = '⏳ 分析中...';
+                
+                document.getElementById('loading').style.display = 'block';
+                document.getElementById('dashboard').style.display = 'none';
+
+                const response = await fetch('http://localhost:8000/api/dashboard/insights');
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || `API错误: ${response.status}`);
+                }
+                
+                const data = await response.json();
+
+                console.log('Dashboard data:', data);
+                
+                btn.disabled = false;
+                btn.textContent = '🔬 进行深度分析';
+
+                // 更新统计卡片
+                document.getElementById('totalConversations').textContent = data.statistics?.total_conversations || 0;
+                
+                // 情绪
+                const mood = data.emotion_analysis?.overall_mood || '中性';
+                document.getElementById('overallMood').textContent = mood;
+                document.getElementById('moodBadge').textContent = mood;
+                
+                // 风险
+                const risk = data.cognitive_assessment?.risk_level || '低风险';
+                document.getElementById('riskLevel').textContent = risk;
+                const riskBadge = document.getElementById('riskBadge');
+                riskBadge.textContent = risk;
+                riskBadge.className = 'badge ' + (risk.includes('高') ? 'high' : risk.includes('中') ? 'medium' : 'low');
+                
+                // 压力
+                const stress = data.emotion_analysis?.stress_level || '低';
+                document.getElementById('stressLevel').textContent = stress;
+                const stressBadge = document.getElementById('stressBadge');
+                stressBadge.textContent = stress;
+                stressBadge.className = 'badge ' + (stress === '高' ? 'high' : stress === '中' ? 'medium' : 'low');
+
+                // 整体评估摘要（如果存在overall_assessment）
+                if (data.overall_assessment) {
+                    const summary = data.overall_assessment.summary || '暂无数据';
+                    document.getElementById('summary').innerHTML = `<p>${summary}</p>`;
+                    
+                    // 认知风险等级
+                    const riskLevel = data.overall_assessment.cognitive_risk_level || '低风险';
+                    document.getElementById('cognitiveRiskLevel').textContent = riskLevel;
+                    
+                    // 评估摘要
+                    document.getElementById('assessmentSummary').textContent = summary;
+                    
+                    // 建议
+                    const recommendations = data.overall_assessment.recommendations || [];
+                    document.getElementById('recommendations').innerHTML = recommendations.map(rec =>
+                        `<li style="margin-bottom: 4px;">${rec}</li>`
+                    ).join('');
+                }
+                
+                // 临床生物标记物
+                if (data.clinical_biomarkers) {
+                    const biomarkers = [
+                        { key: 'Anomia_WordFinding_Difficulty', label: '命名障碍/找词困难', icon: '🔍' },
+                        { key: 'Circumlocution', label: '迂回表达', icon: '🔄' },
+                        { key: 'Semantic_Error', label: '语义错误', icon: '❌' },
+                        { key: 'Empty_Speech_Poverty_of_Content', label: '内容空洞', icon: '📊' },
+                        { key: 'Repetition_Perseveration', label: '重复/持续言语', icon: '🔁' },
+                        { key: 'Speech_Fragmentation_Trailing_Off', label: '言语碎片化', icon: '💬' },
+                        { key: 'Syntactic_Simplification', label: '句法简化', icon: '📝' },
+                        { key: 'Pronoun_Misuse', label: '代词误用', icon: '🔤' },
+                        { key: 'Hesitation_Pause_Frequency_Duration', label: '犹豫和停顿', icon: '⏸️' },
+                        { key: 'Global_Coherence_Loss', label: '全局连贯性丧失', icon: '🧩' }
+                    ];
+                    
+                    let biomarkersHTML = '';
+                    biomarkers.forEach(biomarker => {
+                        const bm = data.clinical_biomarkers[biomarker.key];
+                        if (bm) {
+                            const score = bm.score || 1;
+                            const rationale = bm.rationale || '无特殊发现';
+                            const quote = bm.raw_quote || '';
+                            
+                            const scoreColor = score <= 2 ? '#48bb78' : score <= 4 ? '#ed8936' : '#f56565';
+                            
+                            biomarkersHTML += `
+                                <div style="margin-bottom: 16px; padding: 12px; background: #f7fafc; border-radius: 8px; border-left: 4px solid ${scoreColor};">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                        <span style="font-weight: 600; color: #2d3748;">${biomarker.icon} ${biomarker.label}</span>
+                                        <span style="font-size: 20px; font-weight: bold; color: ${scoreColor};">${score}/7</span>
+                                    </div>
+                                    <div style="font-size: 13px; color: #4a5568; margin-bottom: 4px;">${rationale}</div>
+                                    ${quote ? `<div style="font-size: 12px; color: #718096; font-style: italic; margin-top: 4px;">引文: "${quote}"</div>` : ''}
+                                </div>
+                            `;
+                        }
+                    });
+                    
+                    document.getElementById('clinicalBiomarkers').innerHTML = biomarkersHTML || '<p style="color: #718096;">暂无临床分析数据</p>';
+                }
+
+                // 情感分析
+                document.getElementById('emotionMood').textContent = mood;
+                document.getElementById('emotionStress').textContent = stress;
+
+                const needs = data.emotion_analysis?.emotional_needs || [];
+                document.getElementById('emotionalNeeds').innerHTML = needs.map(need => 
+                    `<span class="need-tag">${need}</span>`
+                ).join('');
+
+                const concerns = data.emotion_analysis?.concerns || [];
+                if (concerns.length > 0) {
+                    document.getElementById('concernsSection').style.display = 'block';
+                    document.getElementById('concerns').innerHTML = concerns.map(concern => 
+                        `<div style="padding: 8px; background: #fff5f5; border-radius: 6px; margin-bottom: 4px; color: #c53030; font-size: 13px;">⚠️ ${concern}</div>`
+                    ).join('');
+                } else {
+                    document.getElementById('concernsSection').style.display = 'none';
+                }
+
+                // 关键洞察（优先使用overall_assessment.recommendations，否则使用key_insights）
+                const insights = data.overall_assessment?.recommendations || data.key_insights || [];
+                document.getElementById('keyInsights').innerHTML = insights.map(insight => 
+                    `<li>${insight}</li>`
+                ).join('') || '<li style="color: #718096;">暂无洞察</li>';
+
+                // 个人信息
+                const personal = data.personal_info || {};
+                let personalHTML = '';
+                
+                if (personal.hobbies && personal.hobbies.length > 0) {
+                    personalHTML += `
+                        <div class="info-item">
+                            <div class="label">爱好</div>
+                            <div class="value">${personal.hobbies.join('、')}</div>
+                        </div>
+                    `;
+                }
+                
+                if (personal.daily_routine) {
+                    personalHTML += `
+                        <div class="info-item">
+                            <div class="label">日常习惯</div>
+                            <div class="value">${personal.daily_routine}</div>
+                        </div>
+                    `;
+                }
+                
+                if (personal.relationships && personal.relationships.length > 0) {
+                    personalHTML += `
+                        <div class="info-item">
+                            <div class="label">人际关系</div>
+                            <div class="value">${personal.relationships.join('、')}</div>
+                        </div>
+                    `;
+                }
+                
+                document.getElementById('personalInfo').innerHTML = personalHTML || '<p style="color: #718096; text-align: center;">暂无个人信息</p>';
+
+                // 最近对话
+                const recent = data.statistics?.recent_conversations || [];
+                document.getElementById('recentConversations').innerHTML = recent.map(conv => `
+                    <div class="conversation-item">
+                        <div class="user">👴 用户: ${conv.user}</div>
+                        <div class="ai">🤖 小雅: ${conv.ai}</div>
+                        <div class="time">${new Date(conv.time).toLocaleString('zh-CN')}</div>
+                    </div>
+                `).join('') || '<p style="color: #718096; text-align: center;">暂无对话记录</p>';
+
+                // 显示仪表盘
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'block';
+
+            } catch (error) {
+                console.error('加载仪表盘失败:', error);
+                document.getElementById('loading').innerHTML = `
+                    <p style="color: red; font-weight: bold;">❌ 分析失败</p>
+                    <p style="color: #718096; font-size: 14px; margin-top: 8px;">${error.message}</p>
+                    <button class="refresh-btn" onclick="loadDashboard()" style="margin-top: 16px;">
+                        🔄 重试
+                    </button>
+                `;
+                
+                const btn = document.getElementById('analyzeBtn');
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = '🔬 进行深度分析';
+                }
+            }
+        }
+
+        // 不自动加载，需要用户点击"进行深度分析"按钮
+        // window.addEventListener('load', loadDashboard);
+    </script>
+</body>
+</html>
+
